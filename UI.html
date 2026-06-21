@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>NEURA · CYBORG INTELLIGENCE</title>
+  <style>
+    /* ----- RESET & BASE ----- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #0a0c12;
+      color: #e0f2fe;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0a0c12; }
+    ::-webkit-scrollbar-thumb { background: #00b4ff; border-radius: 12px; }
+
+    /* ----- CUSTOM CURSOR ----- */
+    #cursor-glow {
+      position: fixed;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 180, 255, 0.6) 0%, rgba(120, 0, 255, 0.2) 70%);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 999;
+      mix-blend-mode: screen;
+      transition: width 0.2s, height 0.2s, background 0.2s;
+      box-shadow: 0 0 30px #00b4ff88;
+    }
+    #cursor-trail {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: #00e0ff;
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 998;
+      filter: blur(4px);
+      transition: 0.02s linear;
+    }
+
+    /* ----- GLASSMORPHISM HELPERS ----- */
+    .glass {
+      background: rgba(12, 20, 30, 0.45);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      border: 1px solid rgba(0, 180, 255, 0.15);
+      box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.8);
+    }
+
+    /* ----- NEURAL NETWORK BG (canvas) ----- */
+    #nn-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ----- MAIN WRAPPER ----- */
+    .site-wrapper {
+      position: relative;
+      z-index: 2;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* ----- HERO SECTION ----- */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      padding: 4rem 0;
+    }
+    .hero-glow-orb {
+      position: absolute;
+      width: 60vw;
+      height: 60vw;
+      background: radial-gradient(circle, rgba(0, 150, 255, 0.15) 0%, transparent 70%);
+      top: 10%;
+      left: 20%;
+      filter: blur(80px);
+      animation: orbPulse 6s infinite alternate;
+    }
+    @keyframes orbPulse {
+      0% { opacity: 0.4; transform: scale(1) translate(0, 0); }
+      100% { opacity: 0.9; transform: scale(1.3) translate(30px, -40px); }
+    }
+
+    .hero h1 {
+      font-size: clamp(3.5rem, 12vw, 8rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, #b0e0ff, #00b4ff, #a855f7, #00e0ff);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradShift 6s ease infinite;
+      text-shadow: 0 0 40px #00b4ff55;
+      line-height: 1.1;
+      position: relative;
+    }
+    @keyframes gradShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .hero h1 span {
+      display: inline-block;
+      background: none;
+      -webkit-text-fill-color: initial;
+      color: #fff;
+      text-shadow: 0 0 30px #00b4ff;
+    }
+    .hero-sub {
+      font-size: clamp(1.2rem, 2.5vw, 2rem);
+      max-width: 720px;
+      margin: 1.5rem auto 2.5rem;
+      opacity: 0.8;
+      letter-spacing: 0.02em;
+      backdrop-filter: blur(4px);
+      padding: 0 1rem;
+      font-weight: 300;
+    }
+    .hero-cta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn-primary {
+      background: rgba(0, 180, 255, 0.2);
+      backdrop-filter: blur(8px);
+      border: 1px solid #00b4ff;
+      color: #fff;
+      padding: 1rem 3.5rem;
+      border-radius: 60px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+      box-shadow: 0 0 30px #00b4ff33;
+      font-size: 1rem;
+      cursor: none;
+    }
+    .btn-primary:hover {
+      background: #00b4ff;
+      box-shadow: 0 0 60px #00b4ffaa;
+      transform: scale(1.05) translateY(-4px);
+      border-color: #fff;
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #e0f2fe;
+      padding: 1rem 3.5rem;
+      border-radius: 60px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      transition: all 0.4s;
+      cursor: none;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #00b4ff;
+      box-shadow: 0 0 40px #00b4ff44;
+      transform: scale(1.02);
+    }
+
+    /* floating holographic elements */
+    .hologram-card {
+      position: absolute;
+      width: 180px;
+      height: 100px;
+      background: rgba(0, 180, 255, 0.04);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(0, 180, 255, 0.15);
+      border-radius: 24px;
+      box-shadow: 0 0 60px #00b4ff22;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      color: #a0d0ff;
+      transform: rotate(8deg) scale(0.9);
+      animation: floatCard 12s infinite alternate ease-in-out;
+      pointer-events: none;
+    }
+    .hologram-card::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(0, 200, 255, 0.1), transparent);
+      pointer-events: none;
+    }
+    @keyframes floatCard {
+      0% { transform: translate(0, 0) rotate(6deg) scale(0.9); }
+      100% { transform: translate(40px, -60px) rotate(-4deg) scale(1); }
+    }
+    .holo1 { top: 12%; left: 4%; animation-duration: 14s; }
+    .holo2 { bottom: 15%; right: 3%; animation-duration: 18s; width: 220px; height: 120px; }
+    .holo3 { top: 20%; right: 6%; animation-duration: 16s; width: 140px; height: 80px; }
+
+    /* ----- SECTIONS (shared) ----- */
+    section {
+      padding: 6rem 0;
+      position: relative;
+      border-bottom: 1px solid rgba(0, 180, 255, 0.05);
+    }
+    .section-title {
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff, #00b4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 2rem;
+      letter-spacing: -0.02em;
+    }
+    .section-sub {
+      max-width: 640px;
+      opacity: 0.7;
+      font-size: 1.2rem;
+      margin-bottom: 3rem;
+    }
+
+    /* FEATURE CARDS */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 2rem;
+    }
+    .feature-card {
+      padding: 2rem 1.5rem;
+      border-radius: 32px;
+      background: rgba(8, 16, 28, 0.5);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(0, 180, 255, 0.08);
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+      position: relative;
+      overflow: hidden;
+      cursor: none;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(0, 180, 255, 0.1), transparent);
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .feature-card:hover {
+      transform: translateY(-12px) scale(1.02);
+      border-color: #00b4ff55;
+      box-shadow: 0 20px 50px -10px #00b4ff33;
+    }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-card .icon {
+      font-size: 2.6rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+      filter: drop-shadow(0 0 20px #00b4ff66);
+    }
+    .feature-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 0.6rem;
+      font-weight: 600;
+    }
+    .feature-card p {
+      opacity: 0.7;
+      font-weight: 300;
+    }
+
+    /* NEURAL INTERACTIVE */
+    #neural-interactive {
+      background: radial-gradient(circle at 30% 40%, #0a1628, #05080f);
+      border-radius: 60px;
+      padding: 3rem 2rem;
+      position: relative;
+      overflow: hidden;
+      min-height: 400px;
+    }
+    #neural-canvas {
+      width: 100%;
+      height: 400px;
+      display: block;
+      border-radius: 40px;
+      background: transparent;
+      cursor: none;
+    }
+
+    /* ARCHITECTURE LAYERS */
+    .arch-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+    .arch-item {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(4px);
+      padding: 1.6rem 2.4rem;
+      border-radius: 60px;
+      border: 1px solid rgba(0, 180, 255, 0.15);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      transition: all 0.3s;
+      box-shadow: 0 0 20px transparent;
+      cursor: none;
+    }
+    .arch-item:hover {
+      border-color: #00b4ff;
+      box-shadow: 0 0 40px #00b4ff55;
+      transform: scale(1.08);
+      background: rgba(0, 180, 255, 0.08);
+    }
+
+    /* CYBORG UNITS */
+    .unit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+    }
+    .unit-card {
+      background: rgba(6, 14, 26, 0.6);
+      backdrop-filter: blur(6px);
+      border-radius: 40px;
+      padding: 2rem 1rem;
+      text-align: center;
+      border: 1px solid rgba(0, 180, 255, 0.06);
+      transition: all 0.4s;
+      cursor: none;
+    }
+    .unit-card:hover {
+      transform: scale(1.04) translateY(-8px);
+      border-color: #00b4ffaa;
+      box-shadow: 0 20px 60px #00b4ff22;
+    }
+    .unit-card .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00b4ff, #a855f7);
+      margin: 0 auto 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: #000;
+      box-shadow: 0 0 40px #00b4ff66;
+    }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 2rem;
+      text-align: center;
+    }
+    .stat-item .number {
+      font-size: 3.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff, #00b4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* TIMELINE */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 1.6rem;
+    }
+    .tl-item {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      padding: 1.2rem 2rem;
+      background: rgba(6, 14, 26, 0.4);
+      backdrop-filter: blur(4px);
+      border-radius: 60px;
+      border-left: 4px solid #00b4ff;
+      transition: 0.3s;
+      cursor: none;
+    }
+    .tl-item:hover {
+      background: rgba(0, 180, 255, 0.05);
+      transform: translateX(12px);
+    }
+    .tl-item .year { font-weight: 700; font-size: 1.8rem; color: #00b4ff; min-width: 80px; }
+
+    /* TESTIMONIALS */
+    .testimonial-slider {
+      display: flex;
+      gap: 2rem;
+      overflow-x: auto;
+      padding: 1rem 0.5rem 2rem;
+      scroll-snap-type: x mandatory;
+    }
+    .testimonial-slider .card {
+      min-width: 280px;
+      padding: 2rem;
+      border-radius: 40px;
+      background: rgba(8, 18, 32, 0.5);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 180, 255, 0.1);
+      scroll-snap-align: start;
+      flex-shrink: 0;
+    }
+
+    /* FAQ */
+    .faq-item {
+      border-bottom: 1px solid rgba(0, 180, 255, 0.08);
+      padding: 1.2rem 0;
+      cursor: none;
+    }
+    .faq-q {
+      font-weight: 600;
+      font-size: 1.2rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.3s;
+      opacity: 0;
+    }
+    .faq-item.active .faq-a {
+      max-height: 200px;
+      opacity: 0.8;
+      padding-top: 1rem;
+    }
+
+    /* CONTACT */
+    .contact-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3rem;
+      background: rgba(6, 14, 26, 0.5);
+      backdrop-filter: blur(12px);
+      border-radius: 60px;
+      padding: 3rem;
+      border: 1px solid rgba(0, 180, 255, 0.08);
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 800px) {
+      .site-wrapper { padding: 0 1rem; }
+      .hero h1 { font-size: 3.8rem; }
+      .hologram-card { display: none; }
+      .contact-panel { flex-direction: column; padding: 2rem; }
+    }
+    @media (max-width: 480px) {
+      .btn-primary, .btn-secondary { padding: 0.8rem 2rem; width: 100%; }
+    }
+
+    /* scroll reveal helper */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 1s cubic-bezier(0.23, 1, 0.32, 1), transform 1s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <!-- custom cursor -->
+  <div id="cursor-glow"></div>
+  <div id="cursor-trail"></div>
+
+  <!-- neural network background -->
+  <canvas id="nn-bg"></canvas>
+
+  <div class="site-wrapper">
+    <!-- HERO -->
+    <section class="hero" id="hero">
+      <div class="hero-glow-orb"></div>
+      <div class="hologram-card holo1">⚡ NEURAL CORE</div>
+      <div class="hologram-card holo2">🧬 EVOLUTION</div>
+      <div class="hologram-card holo3">🌀 CYBERNETICS</div>
+
+      <h1 data-text="NEURA">NEURA</h1>
+      <p class="hero-sub">Cyborg intelligence · where human intuition meets machine precision. The next evolution is here.</p>
+      <div class="hero-cta">
+        <button class="btn-primary">⚡ Initiate</button>
+        <button class="btn-secondary">⟡ Explore</button>
+      </div>
+    </section>
+
+    <!-- FUTURE OF HUMANITY -->
+    <section class="reveal">
+      <h2 class="section-title">⟡ Future of Humanity</h2>
+      <p class="section-sub">We are entering the symbiotic age. Neural interfaces, cognitive augmentation, and ethical AI are reshaping what it means to be human.</p>
+      <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+        <span style="background:#00b4ff22; padding:0.5rem 1.6rem; border-radius:40px; border:1px solid #00b4ff33;">🧠 Cognitive</span>
+        <span style="background:#00b4ff22; padding:0.5rem 1.6rem; border-radius:40px; border:1px solid #00b4ff33;">⚡ Neural Link</span>
+        <span style="background:#00b4ff22; padding:0.5rem 1.6rem; border-radius:40px; border:1px solid #00b4ff33;">🌐 Collective</span>
+      </div>
+    </section>
+
+    <!-- CYBORG FEATURES -->
+    <section class="reveal">
+      <h2 class="section-title">⚡ Cyborg Intelligence</h2>
+      <div class="feature-grid">
+        <div class="feature-card"><div class="icon">🧿</div><h3>Neural Mesh</h3><p>Distributed cognition across organic and synthetic networks.</p></div>
+        <div class="feature-card"><div class="icon">🌀</div><h3>Quantum Core</h3><p>Real-time probabilistic reasoning at petaflop scale.</p></div>
+        <div class="feature-card"><div class="icon">🛡️</div><h3>Adaptive Shield</h3><p>Self-healing architecture with predictive threat response.</p></div>
+        <div class="feature-card"><div class="icon">🌌</div><h3>Holo Interface</h3><p>Immersive spatial computing with neural haptics.</p></div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE NEURAL NET -->
+    <section class="reveal">
+      <h2 class="section-title">🧬 Neural Network</h2>
+      <div id="neural-interactive">
+        <canvas id="neural-canvas"></canvas>
+      </div>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section class="reveal">
+      <h2 class="section-title">🏛️ Technology Architecture</h2>
+      <div class="arch-grid">
+        <div class="arch-item">🧠 AI Core</div>
+        <div class="arch-item">⚛️ Neural Processing</div>
+        <div class="arch-item">🔮 Quantum Layer</div>
+        <div class="arch-item">🤖 Robotics Layer</div>
+        <div class="arch-item">🎯 Decision Engine</div>
+      </div>
+    </section>
+
+    <!-- CYBORG UNITS -->
+    <section class="reveal">
+      <h2 class="section-title">🤖 Advanced Cyborg Units</h2>
+      <div class="unit-grid">
+        <div class="unit-card"><div class="avatar">NX</div><h3>Nexus</h3><p>Strategic command</p></div>
+        <div class="unit-card"><div class="avatar">VN</div><h3>Vanguard</h3><p>Combat & defense</p></div>
+        <div class="unit-card"><div class="avatar">SY</div><h3>Synapse</h3><p>Data & cognition</p></div>
+        <div class="unit-card"><div class="avatar">QR</div><h3>Quantum</h3><p>R&D & evolution</p></div>
+      </div>
+    </section>
+
+    <!-- HUMAN VS CYBORG -->
+    <section class="reveal">
+      <h2 class="section-title">⚔️ Human vs Cyborg</h2>
+      <div style="display:flex; gap:2rem; flex-wrap:wrap; justify-content:center;">
+        <div style="background:#0a1628; padding:2rem 3rem; border-radius:60px; border:1px solid #00b4ff33;"><span style="font-size:2rem;">🧑</span> Human · 72%</div>
+        <div style="background:#0a1628; padding:2rem 3rem; border-radius:60px; border:1px solid #a855f7;"><span style="font-size:2rem;">⚡</span> Cyborg · 94%</div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="reveal">
+      <h2 class="section-title">📊 Live Statistics</h2>
+      <div class="stats-grid">
+        <div class="stat-item"><div class="number" data-count="1280">0</div><p>Neural links</p></div>
+        <div class="stat-item"><div class="number" data-count="3.4">0</div><p>ExaFLOPS</p></div>
+        <div class="stat-item"><div class="number" data-count="99.8">0</div><p>% uptime</p></div>
+        <div class="stat-item"><div class="number" data-count="42">0</div><p>Countries</p></div>
+      </div>
+    </section>
+
+    <!-- TIMELINE -->
+    <section class="reveal">
+      <h2 class="section-title">⏳ Evolution Timeline</h2>
+      <div class="timeline">
+        <div class="tl-item"><span class="year">2024</span> Neural interface prototype</div>
+        <div class="tl-item"><span class="year">2026</span> AI-human symbiosis</div>
+        <div class="tl-item"><span class="year">2028</span> Quantum cognition</div>
+        <div class="tl-item"><span class="year">2030</span> Cyborg society</div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="reveal">
+      <h2 class="section-title">💬 Testimonials</h2>
+      <div class="testimonial-slider">
+        <div class="card">“The neural interface is seamless. I feel more connected than ever.” — Dr. E. Voss</div>
+        <div class="card">“Cyborg intelligence is not just an upgrade; it's a new consciousness.” — A. Kael</div>
+        <div class="card">“Precision, speed, and empathy — the trinity of the new age.” — R. Zhao</div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="reveal">
+      <h2 class="section-title">❓ FAQ</h2>
+      <div class="faq-item active"><div class="faq-q">What is NEURA? <span>+</span></div><div class="faq-a">NEURA is a cybernetic intelligence platform that merges human cognition with advanced AI.</div></div>
+      <div class="faq-item"><div class="faq-q">Is it safe? <span>+</span></div><div class="faq-a">Security is paramount. We use quantum encryption and ethical AI frameworks.</div></div>
+      <div class="faq-item"><div class="faq-q">How to start? <span>+</span></div><div class="faq-a">Contact our team for an integration assessment.</div></div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="reveal" style="border-bottom:0;">
+      <h2 class="section-title">📡 Contact</h2>
+      <div class="contact-panel">
+        <div style="flex:1;"><h3>⚡ Initiate connection</h3><p style="opacity:0.6;">neura@cyberintel.io · +1 (800) 555-NEUR</p></div>
+        <div style="flex:1; display:flex; gap:1rem; flex-wrap:wrap;">
+          <input type="text" placeholder="Your neural signature" style="background:rgba(0,20,40,0.6); border:1px solid #00b4ff33; border-radius:40px; padding:1rem 2rem; flex:1; color:#fff; backdrop-filter:blur(4px);">
+          <button class="btn-primary" style="padding:1rem 2.5rem;">Send</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // ----- CUSTOM CURSOR -----
+    const glow = document.getElementById('cursor-glow');
+    const trail = document.getElementById('cursor-trail');
+    let mx = 0, my = 0;
+    document.addEventListener('mousemove', (e) => {
+      mx = e.clientX; my = e.clientY;
+      glow.style.left = mx + 'px';
+      glow.style.top = my + 'px';
+      trail.style.left = mx + 'px';
+      trail.style.top = my + 'px';
+    });
+
+    // ----- NEURAL NETWORK BACKGROUND (canvas) -----
+    const bgCanvas = document.getElementById('nn-bg');
+    const ctx = bgCanvas.getContext('2d');
+    let width, height, nodes = [], edges = [];
+    function resizeBg() {
+      width = bgCanvas.width = window.innerWidth;
+      height = bgCanvas.height = window.innerHeight;
+      initNodes();
+    }
+    function initNodes() {
+      nodes = [];
+      const count = Math.floor((width * height) / 16000);
+      for (let i = 0; i < count; i++) {
+        nodes.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.6,
+          vy: (Math.random() - 0.5) * 0.6,
+          r: 2 + Math.random() * 3
+        });
+      }
+    }
+    function drawBg() {
+      ctx.clearRect(0, 0, width, height);
+      // update nodes
+      for (let n of nodes) {
+        n.x += n.vx; n.y += n.vy;
+        if (n.x < 0 || n.x > width) n.vx *= -1;
+        if (n.y < 0 || n.y > height) n.vy *= -1;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0, 180, 255, ${0.15 + 0.1 * Math.sin(Date.now()/1000 + n.x)})`;
+        ctx.fill();
+      }
+      // edges
+      ctx.strokeStyle = 'rgba(0, 180, 255, 0.06)';
+      ctx.lineWidth = 0.8;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i+1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(drawBg);
+    }
+    window.addEventListener('resize', resizeBg);
+    resizeBg();
+    drawBg();
+
+    // ----- INTERACTIVE NEURAL CANVAS (section 4) -----
+    const neuralCanvas = document.getElementById('neural-canvas');
+    const nctx = neuralCanvas.getContext('2d');
+    let nw, nh, nnodes = [];
+    function resizeNeural() {
+      const rect = neuralCanvas.parentElement.getBoundingClientRect();
+      neuralCanvas.width = rect.width;
+      neuralCanvas.height = 400;
+      nw = neuralCanvas.width; nh = 400;
+      nnodes = [];
+      for (let i = 0; i < 60; i++) {
+        nnodes.push({
+          x: Math.random() * nw,
+          y: Math.random() * nh,
+          vx: (Math.random() - 0.5) * 0.8,
+          vy: (Math.random() - 0.5) * 0.8,
+          r: 3 + Math.random() * 4
+        });
+      }
+    }
+    let mouseNeural = { x: nw/2, y: nh/2 };
+    neuralCanvas.addEventListener('mousemove', (e) => {
+      const rect = neuralCanvas.getBoundingClientRect();
+      mouseNeural.x = e.clientX - rect.left;
+      mouseNeural.y = e.clientY - rect.top;
+    });
+    function drawNeural() {
+      nctx.clearRect(0, 0, nw, nh);
+      // attract to mouse
+      for (let n of nnodes) {
+        const dx = mouseNeural.x - n.x, dy = mouseNeural.y - n.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 150) {
+          n.vx += dx * 0.003;
+          n.vy += dy * 0.003;
+        }
+        n.vx *= 0.99; n.vy *= 0.99;
+        n.x += n.vx; n.y += n.vy;
+        if (n.x < 0 || n.x > nw) n.vx *= -0.9;
+        if (n.y < 0 || n.y > nh) n.vy *= -0.9;
+        nctx.beginPath();
+        nctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+        const grad = nctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r*2);
+        grad.addColorStop(0, '#00e0ff');
+        grad.addColorStop(1, '#a855f7');
+        nctx.fillStyle = grad;
+        nctx.shadowColor = '#00b4ff';
+        nctx.shadowBlur = 20;
+        nctx.fill();
+      }
+      // connections
+      nctx.shadowBlur = 0;
+      for (let i = 0; i < nnodes.length; i++) {
+        for (let j = i+1; j < nnodes.length; j++) {
+          const dx = nnodes[i].x - nnodes[j].x, dy = nnodes[i].y - nnodes[j].y;
+          if (Math.sqrt(dx*dx+dy*dy) < 100) {
+            nctx.beginPath();
+            nctx.moveTo(nnodes[i].x, nnodes[i].y);
+            nctx.lineTo(nnodes[j].x, nnodes[j].y);
+            nctx.strokeStyle = `rgba(0, 200, 255, ${0.15 + 0.1 * Math.sin(Date.now()/500 + i)})`;
+            nctx.lineWidth = 1.2;
+            nctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(drawNeural);
+    }
+    window.addEventListener('resize', resizeNeural);
+    resizeNeural();
+    drawNeural();
+
+    // ----- SCROLL REVEAL (Intersection Observer) -----
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.2 });
+    reveals.forEach(el => observer.observe(el));
+
+    // ----- ANIMATED COUNTERS (stats) -----
+    const counters = document.querySelectorAll('.stat-item .number');
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const target = parseFloat(el.dataset.count);
+          const isFloat = target % 1 !== 0;
+          let current = 0;
+          const step = target / 80;
+          const interval = setInterval(() => {
+            current += step;
+            if (current >= target) {
+              current = target;
+              clearInterval(interval);
+            }
+            el.textContent = isFloat ? current.toFixed(1) : Math.floor(current);
+          }, 20);
+          counterObserver.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+    counters.forEach(el => counterObserver.observe(el));
+
+    // ----- FAQ ACCORDION -----
+    document.querySelectorAll('.faq-item').forEach(item => {
+      item.addEventListener('click', function() {
+        this.classList.toggle('active');
+      });
+    });
+
+    // ----- HOLOGRAPHIC CARD GLOW (mouse follow) -----
+    document.addEventListener('mousemove', (e) => {
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      document.querySelectorAll('.hologram-card').forEach((card, i) => {
+        const shiftX = (x - 0.5) * 20 * (i+1);
+        const shiftY = (y - 0.5) * 20 * (i+1);
+        card.style.transform = `translate(${shiftX}px, ${shiftY}px) rotate(${6 - i*2}deg) scale(${0.9 + i*0.05})`;
+      });
+    });
+  </script>
+</body>
+</html>
